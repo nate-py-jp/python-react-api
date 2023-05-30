@@ -1,0 +1,39 @@
+backend/venv/*
+backend/__pycache__/*
+
+# Dependency directories
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
+
+# Testing directories
+/frontend/coverage
+
+# Build directories
+/frontend/build
+
+# Environment files
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Editor directories and files
+/frontend/.vscode
+/frontend/.idea
+/frontend/*.iml
+/frontend/*.ipr
+/frontend/*.iws
+
+# Logs and debugging
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# Miscellaneous
+/frontend/.DS_Store
+/frontend/.env.local.backup
+/frontend/.env.development.backup
+/frontend/.env.test.backup
+/frontend/.env.production.backup
