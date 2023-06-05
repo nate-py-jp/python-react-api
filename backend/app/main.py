@@ -6,16 +6,17 @@ from random import randrange
 
 app = FastAPI()
 
-# create a class to define what you want the schema to be
+# create a class to define schema
 class Post(BaseModel):
     title: str
     content: str
+    published: bool = True
 
-
+# simply db 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
 
 
-# Configure CORS settings
+# Configure CORS settings to let fastapi calls work from browswer in JS world
 origins = [
     "http://localhost",
     "http://localhost:3000",
@@ -29,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# funcs to find posts by id
 def find_post(id, posts_list):
     for post in posts_list:
         if post["id"] == int(id):
@@ -81,6 +83,7 @@ def delete_post(id: int):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+# update one post
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
     index = find_post_index(id, my_posts)
@@ -90,5 +93,3 @@ def update_post(id: int, post: Post):
     my_posts[index] = post_dict
     print(my_posts[index])
     return {"message": f"updated post: {my_posts[index]}"}
-
-
