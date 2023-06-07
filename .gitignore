@@ -1,7 +1,7 @@
 backend/venv/*
-backend/app/__pycache__/*
+backend/app/__pycache__
 backend/.env
-backend/__pycache__/*
+backend/__pycache__
 
 # Dependency directories
 /frontend/node_modules
