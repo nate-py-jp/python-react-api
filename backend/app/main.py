@@ -3,6 +3,23 @@ from fastapi.params import Body, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from .models import Post
+from .database import engine
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env file
+
+db_name = os.environ.get("DB_NAME")
+db_host = os.environ.get("DB_HOST")
+db_port = os.environ.get("DB_PORT")
+db_username = os.environ.get("DB_USER")
+db_password = os.environ.get("DB_PASSWORD")
+
+
+#models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -12,8 +29,20 @@ class Post(BaseModel):
     content: str
     published: bool = True
 
-# simply db 
-my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
+while True:
+    try:
+        conn = psycopg2.connect(
+            host = db_host, 
+            database=db_name, 
+            user=db_username, 
+            password=db_password, 
+            cursor_factory=RealDictCursor
+        )
+        cursor = conn.cursor()
+        print("db conn OK!")
+        break
+    except Exception as error:
+        print(f"error in getting conn:", error)
 
 
 # Configure CORS settings to let fastapi calls work from browswer in JS world
@@ -48,26 +77,31 @@ def root():
     return {"message": "hello world"}
 
 
-# get all posts
+# get all posts from db
 @app.get("/posts")
 def get_posts():
-    return {"data": my_posts}
+    cursor.execute(""" SELECT * FROM posts""")
+    posts = cursor.fetchall()
+    print(posts)
+    return {"data": posts}
 
 
 # post a post
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
     post_dict = post.dict()
-    post_dict["id"] = randrange(0,10000000)
-    my_posts.append(post_dict)
-    print(my_posts)
-    return {"your post": post_dict, "all posts": my_posts}
+    cursor.execute(""" INSERT INTO posts (title, content) VALUES (%s, %s) RETURNING *""", (post.title, post.content))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"your post": new_post}
 
 
 # get one post
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = find_post(id, my_posts)
+
+    cursor.execute(""" SELECT * FROM posts WHERE id = %s""", (str(id)))
+    post = cursor.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
     return {"post detail": post}
@@ -76,20 +110,21 @@ def get_post(id: int):
 # delete one post
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    index = find_post_index(id, my_posts)
-    if index == None:
+    index = cursor.execute("""DELETE FROM posts WHERE id = %s returning *""", (str(id),))
+    deleted_post = cursor.fetchone()
+    if deleted_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
-    my_posts.pop(index)
+    conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # update one post
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    index = find_post_index(id, my_posts)
-    if index == None:
+
+    cursor.execute("""UPDATE posts SET title = %s, content= %s WHERE id = %s Returning * """, (post.title, post.content, str(id)))
+    updated_post = cursor.fetchone()
+    if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
-    post_dict = post.dict()
-    my_posts[index] = post_dict
-    print(my_posts[index])
-    return {"message": f"updated post: {my_posts[index]}"}
+    conn.commit()
+    return {"message": f"updated post: {updated_post}"}
