@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from .models import Post
-from .database import engine
+from . import models
+from sqlalchemy.orm import Session
+from .database import engine, get_db
 from dotenv import load_dotenv
 import os
 
@@ -19,9 +20,10 @@ db_username = os.environ.get("DB_USER")
 db_password = os.environ.get("DB_PASSWORD")
 
 
-#models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
 
 # create a class to define schema
 class Post(BaseModel):
@@ -77,31 +79,58 @@ def root():
     return {"message": "hello world"}
 
 
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {"posts": posts}
+
+
 # get all posts from db
 @app.get("/posts")
-def get_posts():
-    cursor.execute(""" SELECT * FROM posts""")
-    posts = cursor.fetchall()
-    print(posts)
+def get_posts(db: Session = Depends(get_db)):
+    
+    posts = db.query(models.Post).all()
+    
+    # (alternative) raw sql 
+    # cursor.execute(""" SELECT * FROM posts""")
+    # posts = cursor.fetchall()
+
+
     return {"data": posts}
 
 
 # post a post
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    post_dict = post.dict()
-    cursor.execute(""" INSERT INTO posts (title, content) VALUES (%s, %s) RETURNING *""", (post.title, post.content))
-    new_post = cursor.fetchone()
-    conn.commit()
+def create_post(post: Post, db: Session = Depends(get_db)):
+    
+    
+    new_post = models.Post(**post.dict())
+    # (alternative)
+    # new_post = models.Post(title=post.title, content=post.content)
+    
+    
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
+
+    # (alternative) with sql directly
+    # post_dict = post.dict()
+    # cursor.execute(""" INSERT INTO posts (title, content) VALUES (%s, %s) RETURNING *""", (post.title, post.content))
+    # new_post = cursor.fetchone()
+    # conn.commit()
     return {"your post": new_post}
 
 
 # get one post
 @app.get("/posts/{id}")
-def get_post(id: int):
+def get_post(id: int, db: Session = Depends(get_db)):
 
-    cursor.execute(""" SELECT * FROM posts WHERE id = %s""", (str(id)))
-    post = cursor.fetchone()
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+    print(post)
+
+    #cursor.execute(""" SELECT * FROM posts WHERE id = %s""", (str(id)))
+    #post = cursor.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
     return {"post detail": post}
