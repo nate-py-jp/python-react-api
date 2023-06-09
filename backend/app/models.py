@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 
+# db table model for 'posts' db in fastapi postgres
 class Post(Base):
     __tablename__ = 'posts'
 

@@ -8,12 +8,12 @@ load_dotenv()  # Load environment variables from .env file
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL")
 
+# boilerplate to get sqlalchemy ready
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
+# get db session
 def get_db():
     db = SessionLocal()
     try:
