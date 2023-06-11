@@ -1,3 +1,6 @@
+# general imports
+from typing import Optional, List
+
 # fastapi imports
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body, Optional
@@ -78,7 +81,7 @@ def find_post_index(id, posts_list):
 
 
 # get all posts
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     
     posts = db.query(models.Post).all()
@@ -91,7 +94,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 # post a post
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     
     
@@ -112,7 +115,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 
 # get one post
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
 
     post = db.query(models.Post).filter(models.Post.id == id).first()
@@ -122,6 +125,8 @@ def get_post(id: int, db: Session = Depends(get_db)):
     # post = cursor.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
+
+    print(post)
     return post
 
 
@@ -148,7 +153,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 # update one post
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.Post)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 
@@ -167,3 +172,15 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # conn.commit()
 
     return post_query.first()
+
+"""
+# create a user
+@app.post("/users", status_code=status.HTTP_201_CREATED)
+def create_user(user: schemas.User, db: Session = Depends(get_db)):
+    print(user)
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+"""
