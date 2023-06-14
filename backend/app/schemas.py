@@ -19,8 +19,16 @@ class Post(PostBase):
         orm_mode = True
 
 
-class User(BaseModel):
+# class for creating user
+class UserCreate(BaseModel):
     email: str
+    password: str
+
+# class to output after creating user
+class UserOut(BaseModel):
+    id: int
+    email: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
