@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 
 router = APIRouter(
-    prefix="/posts"
+    prefix="/posts",
+    tags=["Posts"]
 )
 
 # get all posts
@@ -48,16 +49,15 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 @router.get("/{id}")
 def get_post(id: int, db: Session = Depends(get_db)):
 
-    new_post = db.query(models.Post).filter(models.Post.id == id).first()
+    post_query = db.query(models.Post).filter(models.Post.id == id).first()
 
     # (alternative) with sql directly
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s""", (str(id)))
     # post = cursor.fetchone()
-    if not new_post:
+    if not post_query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
 
-    print(new_post)
-    return new_post
+    return post_query
 
 
 # delete one post
@@ -88,15 +88,13 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 @router.put("/{id}", response_model=schemas.Post)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
 
-    print(id)
-    post_query = db.query(models.Post).filter(models.Post.id == id)
-    post_to_update = post_query.first()
-    print(post_to_update)
+    post_query = db.query(models.Post).filter(models.Post.id == id).first()
+
     # (alternative) with sql directly
     # cursor.execute("""UPDATE posts SET title = %s, content= %s WHERE id = %s Returning * """, (post.title, post.content, str(id)))
     # updated_post = cursor.fetchone()
 
-    if not post_to_update:
+    if not post_query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
     
     post_query.update(post.dict(), synchronize_session=False)
@@ -104,4 +102,4 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # (alternative) with sql directly
     # conn.commit()
 
-    return post_query.first()
+    return post_query
