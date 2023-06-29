@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 # class to define post schema basic model
 class PostBase(BaseModel):
@@ -24,6 +25,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+
 # class to output after creating user
 class UserOut(BaseModel):
     id: int
@@ -33,7 +35,18 @@ class UserOut(BaseModel):
     class Config:
         orm_mode = True
 
+
 # class to for user login
 class UserLogin(BaseModel):
     email: str
     password: str
+
+
+# class for token verification
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    id: Optional[str] = None
