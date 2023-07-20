@@ -97,7 +97,11 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     if not post_query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"id {id} not found")
     
-    post_query.update(post.dict(), synchronize_session=False)
+    #post_query.update(post.dict(), synchronize_session=False)
+
+    post_query.title = post.title
+    post_query.content = post.content
+
     db.commit()
     # (alternative) with sql directly
     # conn.commit()
