@@ -13,7 +13,7 @@ router = APIRouter(
 
 # get all posts
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     
     posts = db.query(models.Post).all()
     
@@ -26,9 +26,10 @@ def get_posts(db: Session = Depends(get_db)):
 
 # post a post
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), get_current_user: int = Depends(oauth2.get_current_user)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     
     
+    print(user_id)
     new_post = models.Post(**post.dict())
     # (alternative)
     # new_post = models.Post(title=post.title, content=post.content)
@@ -62,7 +63,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 # delete one post
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(id: int, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
 
 
     post_to_delete = db.query(models.Post).filter(models.Post.id == id).first()
@@ -86,7 +87,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 # update one post
 @router.put("/{id}", response_model=schemas.Post)
-def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id).first()
 
